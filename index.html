@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
+<title>Pearl Villa C14 — Spiral stair glass balustrade · CAworks 3D review</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%23ECE6DB%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-family=%27monospace%27 font-size=%2717%27 font-weight=%27600%27 text-anchor=%27middle%27 fill=%27%231F1B15%27%3E%5BC%5D%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ECE6DB; --ink:#1F1B15; --ink-soft:#5A5247;
+  --steel:#8E897E; --oak:#A97C46; --oak-deep:#8A6234;
+  --line:rgba(31,27,21,.15); --ink-lift:#2c261d;
+  --font-display:"Archivo",sans-serif;
+  --font-mono:"IBM Plex Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
+  font-family:var(--font-display);-webkit-tap-highlight-color:transparent}
+#app{display:flex;flex-direction:column;height:100%}
+
+/* header */
+header{display:flex;align-items:center;gap:18px;padding:14px 26px;border-bottom:1px solid var(--line);flex:0 0 auto;background:var(--paper);z-index:20}
+header img.logo{height:22px;display:block}
+.htitle{font-weight:300;font-size:17px;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hlabel{font-family:var(--font-mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--steel);white-space:nowrap}
+.hsep{width:1px;height:22px;background:var(--line)}
+header .spacer{flex:1}
+header #btnSide{padding:8px 13px;font-size:12px;white-space:nowrap}
+
+/* stage */
+#stage{position:relative;flex:1;min-height:0;display:flex}
+#viewport{position:relative;flex:1;min-width:0;overflow:hidden}
+canvas{display:block;outline:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+
+/* toolbar */
+#toolbar{position:absolute;top:16px;left:16px;display:flex;flex-direction:column;gap:8px;z-index:10}
+.btn{font-family:var(--font-display);font-weight:500;font-size:12px;letter-spacing:.04em;
+  background:var(--paper);color:var(--ink);border:1px solid var(--line);
+  padding:9px 14px;cursor:pointer;border-radius:1px;text-align:left;transition:border-color .15s,background .15s,color .15s}
+.btn:hover{border-color:var(--oak)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.primary:hover{background:var(--ink-lift)}
+.btn.active{background:var(--oak-deep);border-color:var(--oak-deep);color:var(--paper)}
+.btn:disabled{opacity:.45;cursor:default}
+#levelbar{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:6px;z-index:10}
+#levelbar .btn{padding:7px 12px;font-size:11px}
+
+/* hint */
+#hint{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+  font-family:var(--font-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--steel);background:rgba(236,230,219,.88);border:1px solid var(--line);
+  padding:8px 16px;white-space:nowrap;z-index:10;transition:opacity .4s}
+#hint.commenting{color:var(--oak-deep);border-color:var(--oak)}
+
+/* loading */
+#loading{position:absolute;inset:0;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;background:var(--paper);z-index:40}
+#loading .bar{width:220px;height:1px;background:var(--line);position:relative;overflow:hidden}
+#loading .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--oak);width:0%}
+#loading .lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--steel)}
+
+/* pins */
+.pin{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;cursor:pointer;user-select:none}
+.pin .dot{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;
+  border:1.5px solid var(--paper);box-shadow:0 1px 8px rgba(18,15,11,.4);transition:transform .12s,background .12s}
+.pin:hover .dot{transform:scale(1.18)}
+.pin.resolved .dot{background:var(--steel)}
+.pin.sel .dot{background:var(--oak-deep);transform:scale(1.22)}
+.pin .stem{width:1px;height:9px;background:var(--ink);margin:0 auto}
+.pin.behind{opacity:.28}
+
+/* comment form / popover */
+.pop{position:absolute;z-index:30;width:290px;background:var(--paper);border:1px solid var(--ink);
+  padding:16px;box-shadow:0 6px 30px rgba(18,15,11,.25)}
+.pop .plabel{font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--oak-deep);margin-bottom:8px}
+.pop .ppart{font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.4}
+.pop input,.pop textarea{width:100%;font-family:var(--font-display);font-size:13px;color:var(--ink);
+  background:transparent;border:1px solid var(--line);padding:8px 10px;margin-bottom:8px;border-radius:1px;resize:vertical}
+.pop input:focus,.pop textarea:focus{outline:none;border-color:var(--oak)}
+.pop .row{display:flex;gap:8px;justify-content:flex-end;margin-top:2px}
+.pop .btn{padding:7px 14px}
+.pop .ptext{font-size:13.5px;line-height:1.55;color:var(--ink);white-space:pre-wrap;margin:2px 0 10px}
+.pop .pmeta{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--steel);margin-bottom:10px}
+.pop .link{font-size:11.5px;color:var(--oak-deep);cursor:pointer;text-decoration:underline;text-underline-offset:3px;background:none;border:none;padding:0;font-family:var(--font-display)}
+
+/* sidebar */
+#side{width:320px;flex:0 0 auto;border-left:1px solid var(--line);display:flex;flex-direction:column;background:var(--paper)}
+#side.closed{display:none}
+#side .shead{position:relative}
+#side .sclose{position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;line-height:1;color:var(--steel);cursor:pointer;padding:4px}
+#side .sclose:hover{color:var(--ink)}
+#side .shead{padding:16px 20px 12px;border-bottom:1px solid var(--line)}
+#side .shead .eyebrow{font-weight:500;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--oak-deep);margin:0 0 4px}
+#side .shead .cnt{font-weight:300;font-size:24px;letter-spacing:-.017em}
+#side .list{flex:1;overflow-y:auto}
+.citem{padding:13px 20px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+.citem:hover{background:rgba(169,124,70,.06)}
+.citem.sel{background:rgba(169,124,70,.10)}
+.citem .top{display:flex;align-items:baseline;gap:9px;margin-bottom:4px}
+.citem .num{width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:10.5px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.citem.resolved .num{background:var(--steel)}
+.citem .who{font-weight:500;font-size:12.5px}
+.citem .when{font-family:var(--font-mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel);margin-left:auto}
+.citem .txt{font-size:12.5px;line-height:1.5;color:var(--ink-soft);margin-left:29px}
+.citem.resolved .txt{text-decoration:line-through;opacity:.6}
+.citem .prt{font-family:var(--font-mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel);margin:3px 0 0 29px}
+#side .sfoot{padding:12px 20px;border-top:1px solid var(--line)}
+#side .sfoot a{font-size:11.5px;color:var(--oak-deep);text-decoration:underline;text-underline-offset:3px}
+.empty{padding:26px 20px;font-size:12.5px;color:var(--steel);line-height:1.6}
+
+/* mobile */
+@media (max-width: 860px){
+  header{padding:11px 14px;gap:10px}
+  .htitle{font-size:14px}
+  .hlabel.rev{display:none}
+  #side{position:absolute;right:0;top:0;bottom:0;z-index:25;transform:translateX(100%);transition:transform .25s;width:min(320px,86vw);box-shadow:-6px 0 30px rgba(18,15,11,.18)}
+  #side.closed{display:flex}
+  #side.open{transform:translateX(0)}
+  #toolbar{top:12px;left:12px}
+  #levelbar{top:12px;right:12px}
+  #hint{bottom:12px;font-size:8.5px;padding:7px 10px;max-width:92vw;white-space:normal;text-align:center}
+  .pop{width:min(300px,88vw)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <img class="logo" id="logoImg" alt="[CAworks]">
+    <div class="hsep"></div>
+    <div>
+      <div class="htitle">Pearl Villa C14 — Spiral stair glass balustrade</div>
+      <div class="hlabel">Drawing 58132.04 · Draft for review — splits &amp; positions only</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="btnSide">Comments (<span id="hcount">0</span>)</button>
+    <div class="hlabel rev">CAworks Designer Glass Trading LLC</div>
+  </header>
+
+  <div id="stage">
+    <div id="viewport">
+      <div id="labels"></div>
+      <div id="toolbar">
+        <button class="btn primary" id="btnComment">＋ Add comment</button>
+        <button class="btn" id="btnFit">Fit view</button>
+        <button class="btn" id="btnGlass">Dim hardware</button>
+      </div>
+      <div id="levelbar"></div>
+      <div id="hint">Drag to rotate · scroll / pinch to zoom · two-finger or right-drag to pan</div>
+      <div id="loading"><div class="lbl">Loading model</div><div class="bar"><i id="lbar"></i></div></div>
+    </div>
+
+    <aside id="side">
+      <div class="shead">
+        <button class="sclose" id="sClose" title="Hide comments">×</button>
+        <p class="eyebrow">Review comments</p>
+        <div class="cnt"><span id="ccount">0</span> <span style="font-size:13px;color:var(--steel)">pinned</span></div>
+      </div>
+      <div class="list" id="clist"><div class="empty">No comments yet.<br><br>Press “＋ Add comment”, then click any point on the model to pin a note there.</div></div>
+      <div class="sfoot"><a href="/api/comments.csv" id="csvLink">Download all comments (CSV)</a></div>
+    </aside>
+  </div>
+</div>
+
+<script src="/logo.js"></script>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+const API = location.hostname.includes('railway.app') || location.hostname === 'localhost'
+  ? '' : 'https://c14-stairs-production.up.railway.app';
+addEventListener('DOMContentLoaded', () => { const l = document.getElementById('csvLink'); if (l && API) l.href = API + '/api/comments.csv'; });
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const viewport = document.getElementById('viewport');
+const labels = document.getElementById('labels');
+
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+viewport.insertBefore(renderer.domElement, labels);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xECE6DB);
+
+const camera = new THREE.PerspectiveCamera(46, 1, 0.05, 500);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.09;
+controls.maxPolarAngle = Math.PI * 0.98;
+
+scene.add(new THREE.HemisphereLight(0xfff8ee, 0xb9b2a5, 1.1));
+const d1 = new THREE.DirectionalLight(0xffffff, 1.5); d1.position.set(6, 12, 8); scene.add(d1);
+const d2 = new THREE.DirectionalLight(0xf3ead9, 0.6); d2.position.set(-7, 4, -6); scene.add(d2);
+
+let model = null, bbox = null, center = new THREE.Vector3();
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+const loader = new GLTFLoader();
+loader.load('/model.glb?v=1',
+  (gltf) => {
+    model = gltf.scene;
+    model.traverse(o => { if (o.material && o.material.transparent === undefined) return;
+      if (o.material) { o.material.depthWrite = !(o.material.transparent); } });
+    scene.add(model);
+    bbox = new THREE.Box3().setFromObject(model);
+    bbox.getCenter(center);
+    buildLevels();
+    fitView();
+    document.getElementById('loading').style.display = 'none';
+    loadComments();
+  },
+  (ev) => { if (ev.total) document.getElementById('lbar').style.width = (100*ev.loaded/ev.total)+'%'; },
+  (err) => { document.querySelector('#loading .lbl').textContent = 'Failed to load model'; console.error(err); });
+
+function sizeRenderer(){
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(sizeRenderer).observe(viewport);
+sizeRenderer();
+
+function fitView(){
+  if (!bbox) return;
+  const size = bbox.getSize(new THREE.Vector3());
+  const r = Math.max(size.x, size.y, size.z) * 0.62;
+  const dir = new THREE.Vector3(1, 0.35, 1).normalize();
+  flyTo(center.clone(), center.clone().add(dir.multiplyScalar(r * 2.1)));
+}
+
+function buildLevels(){
+  const bar = document.getElementById('levelbar');
+  const names = ['Basement','Ground','First','Second'];
+  const y0 = bbox.min.y, y1 = bbox.max.y, h = (y1 - y0) / 4;
+  const btnAll = document.createElement('button');
+  btnAll.className = 'btn'; btnAll.textContent = 'All floors';
+  btnAll.onclick = fitView; bar.appendChild(btnAll);
+  names.forEach((nm, i) => {
+    const b = document.createElement('button');
+    b.className = 'btn'; b.textContent = nm;
+    b.onclick = () => {
+      const yc = y0 + h * (i + 0.5);
+      const t = new THREE.Vector3(center.x, yc, center.z);
+      const dir = new THREE.Vector3(1, 0.18, 1).normalize();
+      flyTo(t, t.clone().add(dir.multiplyScalar(6.2)));
+    };
+    bar.appendChild(b);
+  });
+}
+
+/* fly animation */
+let flyAnim = null;
+function flyTo(target, camPos){
+  const t0 = controls.target.clone(), c0 = camera.position.clone();
+  const start = performance.now(), dur = 650;
+  flyAnim = (now) => {
+    let k = Math.min(1, (now - start) / dur);
+    k = 1 - Math.pow(1 - k, 3);
+    controls.target.lerpVectors(t0, target, k);
+    camera.position.lerpVectors(c0, camPos, k);
+    if (k >= 1) flyAnim = null;
+  };
+}
+
+/* ------- comments ------- */
+let comments = [];
+let commentMode = false;
+let selectedId = null;
+let authorName = localStorage.getItem('c14_author') || '';
+
+const btnComment = document.getElementById('btnComment');
+const hint = document.getElementById('hint');
+btnComment.onclick = () => setCommentMode(!commentMode);
+function setCommentMode(v){
+  commentMode = v;
+  btnComment.classList.toggle('active', v);
+  btnComment.textContent = v ? '× Cancel commenting' : '＋ Add comment';
+  hint.classList.toggle('commenting', v);
+  hint.textContent = v ? 'Click / tap a point on the model to pin your comment'
+                       : 'Drag to rotate · scroll / pinch to zoom · two-finger or right-drag to pan';
+  renderer.domElement.style.cursor = v ? 'crosshair' : '';
+}
+
+function partNameOf(obj){
+  let o = obj;
+  while (o){
+    if (o.name && !/^mesh|^node|^__/i.test(o.name) && o.name.trim()) {
+      return o.name.replace(/\|.*$/, '').replace(/ \(\d+\)$/, '')
+        .replace(/_/g, ' ').replace(/^PearlVillaC14\s*-\s*/i, '').replace(/-(\d+)$/, ' $1').trim();
+    }
+    o = o.parent;
+  }
+  return 'Model';
+}
+
+function pick(ev){
+  const r = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObject(model, true);
+  return hits.length ? hits[0] : null;
+}
+
+let downXY = null;
+renderer.domElement.addEventListener('pointerdown', e => { downXY = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downXY || !model) return;
+  const moved = Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]);
+  downXY = null;
+  if (moved > 6) return;
+  closePop();
+  if (!commentMode) { selectPin(null); return; }
+  const hit = pick(e);
+  if (!hit) return;
+  openNewCommentForm(hit.point.clone(), partNameOf(hit.object), e.clientX, e.clientY);
+});
+
+/* popover management */
+let popEl = null;
+function closePop(){ if (popEl) { popEl.remove(); popEl = null; } }
+function placePop(el, x, y){
+  document.body.appendChild(el);
+  const vw = innerWidth, vh = innerHeight, rw = el.offsetWidth, rh = el.offsetHeight;
+  el.style.left = Math.min(Math.max(8, x + 14), vw - rw - 8) + 'px';
+  el.style.top  = Math.min(Math.max(8, y - rh / 2), vh - rh - 8) + 'px';
+}
+
+function openNewCommentForm(pos, part, x, y){
+  closePop();
+  const el = document.createElement('div');
+  el.className = 'pop';
+  el.innerHTML = `
+    <div class="plabel">New comment</div>
+    <div class="ppart">${esc(part)}</div>
+    <input id="fAuthor" placeholder="Your name" value="${esc(authorName)}">
+    <textarea id="fText" rows="3" placeholder="Write your comment…"></textarea>
+    <div class="row">
+      <button class="btn" id="fCancel">Cancel</button>
+      <button class="btn primary" id="fSave">Pin comment</button>
+    </div>`;
+  placePop(el, x, y);
+  popEl = el;
+  el.querySelector('#fText').focus();
+  el.querySelector('#fCancel').onclick = closePop;
+  el.querySelector('#fSave').onclick = async () => {
+    const author = el.querySelector('#fAuthor').value.trim();
+    const text = el.querySelector('#fText').value.trim();
+    if (!text) { el.querySelector('#fText').style.borderColor = 'var(--oak)'; return; }
+    if (author) { authorName = author; localStorage.setItem('c14_author', author); }
+    el.querySelector('#fSave').disabled = true;
+    try {
+      const res = await fetch(API + '/api/comments', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ pos:[pos.x,pos.y,pos.z], part, author, text }) });
+      const item = await res.json();
+      comments.push(item);
+      refreshUI(); closePop(); setCommentMode(false); selectPin(item.id);
+    } catch { el.querySelector('#fSave').disabled = false; }
+  };
+}
+
+function openDetail(c, x, y){
+  closePop();
+  const el = document.createElement('div');
+  el.className = 'pop';
+  el.innerHTML = `
+    <div class="plabel">Comment ${c.n}${c.resolved ? ' · resolved' : ''}</div>
+    <div class="pmeta">${esc(c.author)} · ${new Date(c.created).toLocaleString()}</div>
+    <div class="ppart">${esc(c.part)}</div>
+    <div class="ptext">${esc(c.text)}</div>
+    <div class="row" style="justify-content:space-between">
+      <button class="link" id="dDel">Delete</button>
+      <span>
+        <button class="btn" id="dClose">Close</button>
+        <button class="btn primary" id="dRes">${c.resolved ? 'Reopen' : 'Resolve'}</button>
+      </span>
+    </div>`;
+  placePop(el, x, y);
+  popEl = el;
+  el.querySelector('#dClose').onclick = () => { closePop(); selectPin(null); };
+  el.querySelector('#dRes').onclick = async () => {
+    const res = await fetch(API + '/api/comments/' + c.id, { method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ resolved: !c.resolved }) });
+    const upd = await res.json();
+    Object.assign(c, upd); refreshUI(); closePop();
+  };
+  el.querySelector('#dDel').onclick = async () => {
+    if (!confirm('Delete comment ' + c.n + '?')) return;
+    await fetch(API + '/api/comments/' + c.id, { method:'DELETE' });
+    comments = comments.filter(x => x.id !== c.id);
+    selectPin(null); refreshUI(); closePop();
+  };
+}
+
+async function loadComments(){
+  try { comments = await (await fetch(API + '/api/comments')).json(); } catch { comments = []; }
+  refreshUI();
+}
+
+/* pins overlay */
+const pinEls = new Map();
+function refreshUI(){
+  // pins
+  for (const [id, el] of pinEls) if (!comments.find(c => c.id === id)) { el.remove(); pinEls.delete(id); }
+  for (const c of comments){
+    if (!pinEls.has(c.id)){
+      const el = document.createElement('div');
+      el.className = 'pin';
+      el.innerHTML = `<div class="dot">${c.n}</div><div class="stem"></div>`;
+      el.addEventListener('pointerup', e => { e.stopPropagation(); selectPin(c.id); openDetail(c, e.clientX, e.clientY); });
+      labels.appendChild(el);
+      pinEls.set(c.id, el);
+    }
+    pinEls.get(c.id).classList.toggle('resolved', !!c.resolved);
+  }
+  // sidebar
+  const list = document.getElementById('clist');
+  document.getElementById('ccount').textContent = comments.length;
+  document.getElementById('hcount').textContent = comments.length;
+  if (!comments.length){
+    list.innerHTML = '<div class="empty">No comments yet.<br><br>Press “＋ Add comment”, then click any point on the model to pin a note there.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  for (const c of [...comments].sort((a,b) => a.n - b.n)){
+    const div = document.createElement('div');
+    div.className = 'citem' + (c.resolved ? ' resolved' : '') + (c.id === selectedId ? ' sel' : '');
+    div.innerHTML = `
+      <div class="top"><span class="num">${c.n}</span><span class="who">${esc(c.author)}</span>
+        <span class="when">${new Date(c.created).toLocaleDateString()}</span></div>
+      <div class="txt">${esc(c.text)}</div>
+      <div class="prt">${esc(c.part)}</div>`;
+    div.onclick = () => { selectPin(c.id); flyToComment(c); };
+    list.appendChild(div);
+  }
+}
+
+function selectPin(id){
+  selectedId = id;
+  for (const [cid, el] of pinEls) el.classList.toggle('sel', cid === id);
+  document.querySelectorAll('.citem').forEach(el => el.classList.remove('sel'));
+  refreshSidebarSel();
+}
+function refreshSidebarSel(){
+  const items = document.querySelectorAll('.citem');
+  const sorted = [...comments].sort((a,b) => a.n - b.n);
+  items.forEach((el, i) => el.classList.toggle('sel', sorted[i] && sorted[i].id === selectedId));
+}
+
+function flyToComment(c){
+  const p = new THREE.Vector3(...c.pos);
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  flyTo(p, p.clone().add(dir.multiplyScalar(3.4)));
+  if (innerWidth <= 860) document.getElementById('side').classList.remove('open');
+}
+
+/* project pins each frame */
+const v = new THREE.Vector3();
+function updatePins(){
+  const r = renderer.domElement.getBoundingClientRect();
+  for (const c of comments){
+    const el = pinEls.get(c.id); if (!el) continue;
+    v.set(c.pos[0], c.pos[1], c.pos[2]).project(camera);
+    if (v.z > 1) { el.style.display = 'none'; continue; }
+    el.style.display = '';
+    el.style.left = ((v.x + 1) / 2 * r.width) + 'px';
+    el.style.top  = ((-v.y + 1) / 2 * r.height) + 'px';
+    // occlusion test (cheap): ray to pin
+    const dist = camera.position.distanceTo(v.set(c.pos[0], c.pos[1], c.pos[2]));
+    raycaster.set(camera.position, v.sub(camera.position).normalize());
+    const hits = raycaster.intersectObject(model, true);
+    el.classList.toggle('behind', hits.length > 0 && hits[0].distance < dist - 0.05);
+  }
+}
+
+/* dim hardware toggle */
+let dimmed = false;
+document.getElementById('btnGlass').onclick = (e) => {
+  dimmed = !dimmed;
+  e.target.classList.toggle('active', dimmed);
+  model.traverse(o => {
+    if (!o.isMesh && !o.isInstancedMesh) return;
+    const nm = (o.name || '') + '|' + partNameOf(o);
+    const isGlass = /glass|constraint/i.test(nm);
+    if (!isGlass){
+      if (dimmed){
+        o.userData._m = o.material;
+        o.material = o.material.clone();
+        o.material.transparent = true; o.material.opacity = 0.12; o.material.depthWrite = false;
+      } else if (o.userData._m){ o.material = o.userData._m; delete o.userData._m; }
+    }
+  });
+};
+
+document.getElementById('btnFit').onclick = fitView;
+const sideEl = document.getElementById('side');
+function isMobile(){ return innerWidth <= 860; }
+function toggleSide(force){
+  if (isMobile()){
+    const open = force !== undefined ? force : !sideEl.classList.contains('open');
+    sideEl.classList.toggle('open', open);
+  } else {
+    const closed = force !== undefined ? !force : !sideEl.classList.contains('closed');
+    sideEl.classList.toggle('closed', closed);
+  }
+}
+document.getElementById('btnSide').onclick = () => toggleSide();
+document.getElementById('sClose').onclick = () => toggleSide(false);
+if (isMobile()) sideEl.classList.remove('open');
+
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* main loop */
+renderer.setAnimationLoop((now) => {
+  if (flyAnim) flyAnim(now);
+  controls.update();
+  if (model) updatePins();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
